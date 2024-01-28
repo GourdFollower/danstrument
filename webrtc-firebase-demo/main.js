@@ -4,7 +4,19 @@ import firebase from 'firebase/app';
 import 'firebase/firestore';
 
 const firebaseConfig = {
-  // your config
+  apiKey: "AIzaSyDZQ3u9STLcf_KwTHkiAoNSWPtho9Bhxps",
+
+  authDomain: "fir-rtc2-5b138.firebaseapp.com",
+
+  projectId: "fir-rtc2-5b138",
+
+  storageBucket: "fir-rtc2-5b138.appspot.com",
+
+  messagingSenderId: "13748560128",
+
+  appId: "1:13748560128:web:dc88b8fd4c36128ad293e5",
+
+  measurementId: "G-HL98XTTRX4"
 };
 
 if (!firebase.apps.length) {
@@ -37,9 +49,98 @@ const hangupButton = document.getElementById('hangupButton');
 
 // 1. Setup media sources
 
+window.AudioContext = window.AudioContext || window.webkitAudioContext;
+
+var context = new AudioContext();
+
+function playSound(arr) {
+  var buf = new Float32Array(arr.length)
+  for (var i = 0; i < arr.length; i++) buf[i] = arr[i]
+  var buffer = context.createBuffer(1, buf.length, context.sampleRate)
+  buffer.copyToChannel(buf, 0)
+  var source = context.createBufferSource();
+  source.buffer = buffer;
+  source.connect(context.destination);
+  source.start(0);
+}
+
+function sineWaveAt(sampleNumber, tone) {
+  var sampleFreq = context.sampleRate / tone
+  return Math.sin(sampleNumber / (sampleFreq / (Math.PI * 2)))
+}
+
+var arr = [],
+  volume = 0.2,
+  seconds = 0.5,
+  tone = 441
+
+for (var i = 0; i < context.sampleRate * seconds; i++) {
+  arr[i] = sineWaveAt(i, tone) * volume
+}
+
+var arr2 = [],
+  volume = 0.2,
+  seconds = 0.5,
+  tone = 800
+
+for (var i = 0; i < context.sampleRate * seconds; i++) {
+  arr2[i] = sineWaveAt(i, tone) * volume
+}
+
+async function test() {
+  const maxWidth = window.innerWidth;
+  const maxHeight = window.innerHeight;
+  const constraints = {
+    width: {ideal: '200px', max: maxWidth},
+    height: {ideal: '200px', max: maxHeight},
+  };
+  webcamVideo.width = maxWidth;
+  webcamVideo.height = maxHeight;
+
+  const imageScaleFactor = 0.50;
+  const flipHorizontal = false;
+  const outputStride = 16;
+
+  const net = await posenet.load();
+  const pose = await net.estimateSinglePose(webcamVideo, imageScaleFactor, flipHorizontal, outputStride);
+  console.log(pose.keypoints[0].position.x);
+  if (pose.keypoints[0].position.x < 600) {
+    playSound(arr);
+  }
+
+  if (pose.keypoints[0].position.x > 800) {
+    playSound(arr2);
+  }
+
+  
+}
+async function testRemote() {
+  console.log("hi");
+  const maxWidth = window.innerWidth;
+  const maxHeight = window.innerHeight;
+  const constraints = {
+    width: {ideal: '200px', max: maxWidth},
+    height: {ideal: '200px', max: maxHeight},
+  };
+  remoteVideo.width = maxWidth;
+  remoteVideo.height = maxHeight;
+
+  const imageScaleFactor = 0.50;
+  const flipHorizontal = false;
+  const outputStride = 16;
+
+  const netRemote = await posenet.load();
+  const poseRemote = await netRemote.estimateSinglePose(remoteVideo, imageScaleFactor, flipHorizontal, outputStride);
+  console.log("REMOTE");
+  console.log(poseRemote.keypoints[0].position.x);
+  if (poseRemote.keypoints[0].position.x < 300) {
+    playSound(arr);
+  }
+}
+
 webcamButton.onclick = async () => {
   alert("hi");
-  localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+  localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
   remoteStream = new MediaStream();
 
   // Push tracks from local stream to peer connection
@@ -54,9 +155,12 @@ webcamButton.onclick = async () => {
     });
   };
 
+
   webcamVideo.srcObject = localStream;
   remoteVideo.srcObject = remoteStream;
 
+  //test();
+  var ok = setInterval(test, 1000);
   /*
   const imageScaleFactor = 0.50;
   const flipHorizontal = false;
@@ -72,6 +176,8 @@ webcamButton.onclick = async () => {
   answerButton.disabled = false;
   webcamButton.disabled = true;
 };
+
+
 
 // 2. Create an offer
 callButton.onclick = async () => {
@@ -155,4 +261,9 @@ answerButton.onclick = async () => {
       }
     });
   });
+
 };
+
+hangupButton.onclick = async () => {
+  var ok = setInterval(testRemote, 1000);
+}

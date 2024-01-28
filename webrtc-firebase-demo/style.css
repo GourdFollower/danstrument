@@ -1,12 +1,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Syne+Mono&display=swap');
 
 body {
-  font-family: 'Syne Mono', monospace;
+  font-family: 'Ariel', monospace;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
-  margin: 80px 10px;
+  margin: 0;
 }
 
 video {
